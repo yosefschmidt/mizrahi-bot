@@ -58,13 +58,13 @@ async function getKodByUrl(data) {
 async function processData(v, i, benefitUrl, phoneNumber,email) {
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
  const browser = await puppeteer.launch({
-   
-  headless: true,
+//    executablePath: '/usr/bin/google-chrome-stable',
+  headless: "new",
   args: ['--no-sandbox', '--disable-setuid-sandbox']
 });
 
   const page = await browser.newPage();
-  executablePath: '/usr/bin/google-chrome-stable',
+  
   const url = benefitUrl; 
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 300000 });
  
