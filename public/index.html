@@ -7,33 +7,43 @@
     body {
       font-family: Arial, sans-serif;
       background-color: #f0f4f8;
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 2rem;
     }
     h1 {
       color: #333;
+      margin-bottom: 1rem;
     }
     label {
       font-weight: bold;
+      display: block;
+      margin-top: 1rem;
     }
     input, textarea, button {
       padding: 0.5rem;
-      margin: 0.5rem 0;
+      margin: 0.25rem 0 1rem 0;
       width: 100%;
+      max-width: 100%;
       box-sizing: border-box;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    textarea {
+      resize: vertical;
     }
     .group {
       background: #ffffff;
-      padding: 1rem;
-      margin-bottom: 1rem;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
       border-radius: 8px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     .inline {
       display: flex;
-      gap: 1rem;
+      gap: 0.5rem;
       align-items: center;
+      margin-bottom: 0.75rem;
     }
     .inline input {
       flex: 1;
@@ -43,12 +53,18 @@
       color: white;
       border: none;
       cursor: pointer;
+      font-size: 0.9rem;
+      padding: 0.25rem 0.5rem;
+      width: auto;
     }
     button.remove {
       background-color: #dc3545;
       color: white;
       border: none;
       cursor: pointer;
+      font-size: 0.9rem;
+      padding: 0.25rem 0.5rem;
+      width: auto;
     }
     .actions {
       display: flex;
@@ -74,6 +90,35 @@
       border-radius: 5px;
       margin-right: 1rem;
     }
+    .load-template {
+      background-color: #17a2b8;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    pre#response {
+      background-color: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 1rem;
+      }
+      .inline {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .actions {
+        flex-direction: column;
+      }
+    }
   </style>
 </head>
 <body>
@@ -81,6 +126,7 @@
   <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
     <button class="storage-toggle" onclick="toggleStorage()" id="storageBtn">שמור בזיכרון המקומי: לא</button>
     <button class="clear-storage" id="clearBtn" onclick="clearStorage()" style="display:none">נקה נתונים שמורים</button>
+    <button class="load-template" onclick="loadTemplatePrompt()">טקסט מוכן</button>
   </div>
   <form id="dataForm">
     <div class="group">
@@ -94,13 +140,13 @@
     <div class="group">
       <label>כתובות URL:</label>
       <div id="urlContainer"></div>
-      <button type="button" class="add" onclick="addUrl()">+ הוסף כתובת</button>
+      <button type="button" class="add" onclick="addUrl()">+</button>
     </div>
 
     <div class="group">
       <label>נתוני אנשים:</label>
       <div id="personContainer"></div>
-      <button type="button" class="add" onclick="addPerson()">+ הוסף אדם</button>
+      <button type="button" class="add" onclick="addPerson()">+</button>
     </div>
 
     <div class="actions">
@@ -157,7 +203,6 @@
     function collectFormData() {
       const phone = document.getElementById('phone').value.trim();
       const email = document.getElementById('email').value.trim();
-
       const urls = Array.from(document.querySelectorAll('input[name="url"]')).map(input => input.value.trim()).filter(Boolean);
       const peopleInputs = document.querySelectorAll('#personContainer .inline');
       const data = Array.from(peopleInputs).map((div, i) => {
@@ -168,8 +213,23 @@
           cardNumber: inputs[1].value.trim()
         };
       });
-
       return { email, phone, url: urls, data };
+    }
+
+    function loadTemplatePrompt() {
+      const raw = prompt("הדבק כאן את הנתונים כ-JSON:");
+      if (!raw) return;
+      try {
+        const { email, phone, url, data } = JSON.parse(raw);
+        document.getElementById('email').value = email || '';
+        document.getElementById('phone').value = phone || '';
+        urlContainer.innerHTML = '';
+        (url || []).forEach(addUrl);
+        personContainer.innerHTML = '';
+        (data || []).forEach(p => addPerson(p.id, p.cardNumber));
+      } catch (e) {
+        alert('שגיאה בקריאת הנתונים. ודא שהפורמט תקין.');
+      }
     }
 
     function saveToLocalStorage() {
@@ -182,18 +242,14 @@
     function loadFromLocalStorage() {
       const saved = localStorage.getItem('mizrahiFormData');
       if (!saved) return;
-
       try {
         const { email, phone, url, data } = JSON.parse(saved);
         document.getElementById('email').value = email || '';
         document.getElementById('phone').value = phone || '';
-
         urlContainer.innerHTML = '';
         (url || []).forEach(addUrl);
-
         personContainer.innerHTML = '';
         (data || []).forEach(p => addPerson(p.id, p.cardNumber));
-
         clearBtn.style.display = 'inline-block';
       } catch (e) {
         console.warn('בעיה בטעינת הנתונים מהאחסון המקומי', e);
@@ -206,14 +262,12 @@
       const responseEl = document.getElementById('response');
       responseEl.textContent = 'שולח...';
       saveToLocalStorage();
-
       try {
         const res = await fetch('/submit', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
-
         const text = await res.text();
         try {
           const json = JSON.parse(text);
@@ -237,7 +291,6 @@
       URL.revokeObjectURL(url);
     }
 
-    // התחלה עם שדה אחד + טעינת נתונים שמורים
     loadFromLocalStorage();
     if (urlContainer.children.length === 0) addUrl();
     if (personContainer.children.length === 0) addPerson();
