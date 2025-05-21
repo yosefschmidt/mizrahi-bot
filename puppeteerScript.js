@@ -1,12 +1,14 @@
+﻿// puppeteerScript.js (מתוקן ל־Node 18, CommonJS)
+
 const puppeteer = require("puppeteer");
-const nodemailer = require('nodemailer')
+const nodemailer = require("nodemailer");
 
 async function getKodByUrl(data) {
   const results = [];
   const nameOfBenefit = [];
 
   for (let urlIndex = 0; urlIndex < data.url.length; urlIndex++) {
-    const tempResults = []; // מערך זמני עבור התוצאות של ה-URL הנוכחי
+    const tempResults = [];
 
     for (let dataIndex = 0; dataIndex < data.data.length; dataIndex++) {
       const v = data.data[dataIndex];
@@ -16,33 +18,21 @@ async function getKodByUrl(data) {
         data.url[urlIndex],
         data.phone,
         data.email
-      ); 
-    
+      );
+
       console.log(result.nameOfBenefit);
-      if(dataIndex ===0){tempResults.push(result.nameOfBenefit)
-        nameOfBenefit.push(result.nameOfBenefit)
-      // console.log(result)
-      };    
-      tempResults.push(result.benefit); // אסוף את ההטבות עבור ה-URL הזה
+      if (dataIndex === 0) {
+        tempResults.push(result.nameOfBenefit);
+        nameOfBenefit.push(result.nameOfBenefit);
+      }
+      tempResults.push(result.benefit);
+
       if (dataIndex < data.data.length - 1) {
-        await delay(1000); // המתנה של שנייה בין עיבוד כל פריט מידע
+        await sleep(1000);
       }
     }
-    results.push(
-      tempResults
-    );
-  }
 
-  function arrayToString(arr, level = 0) {
-    let result = "";
-    arr.forEach((item) => {
-      if (Array.isArray(item)) {
-        result += "\n" + arrayToString(item, level + 1) + "\n";
-      } else {
-        result += "\n" + item;
-      }
-    });
-    return result;
+    results.push(tempResults);
   }
 
   const textResults = arrayToString(results).trim();
@@ -52,27 +42,25 @@ async function getKodByUrl(data) {
     title: "קודי ההטבה של מזרחי טפחות",
     email: data.email,
   });
+
   return results;
 }
 
-async function processData(v, i, benefitUrl, phoneNumber,email) {
-  const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
- const browser = await puppeteer.launch({
-   
-  headless: true,
-  args: ['--no-sandbox', '--disable-setuid-sandbox']
-});
+async function processData(v, i, benefitUrl, phoneNumber, email) {
+  const browser = await puppeteer.launch({
+    executablePath: '/usr/bin/google-chrome-stable',
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox']
+  });
 
   const page = await browser.newPage();
-  executablePath: '/usr/bin/google-chrome-stable',
-  const url = benefitUrl; 
+  const url = benefitUrl;
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 300000 });
- 
-  // אם אין URL, נניח שמדובר בנתוני כרטיס ונמלא אותם
 
   await page.evaluate(() => {
-    if (document.querySelector("#HacartisDiscountCodeForm").className.includes("hide")) {
-      document.querySelector("#HacartisDiscountCodeForm").className = "discountCodeForm";
+    const form = document.querySelector("#HacartisDiscountCodeForm");
+    if (form && form.className.includes("hide")) {
+      form.className = "discountCodeForm";
     }
   });
 
@@ -81,71 +69,73 @@ async function processData(v, i, benefitUrl, phoneNumber,email) {
   await page.type('input[id="phone"]', phoneNumber);
   await page.type('input[id="Email"]', email);
   await page.click('button[id="btnSubmit"]');
+
   await sleep(7000);
-  let bool= await page.evaluate(() => {
-    if (document.querySelector("#DiscountCodeModalFailure").className.includes("in")) {
-      console.log("לא נמצא קוד הטבה");
-      return true;
-    }
-  })
-  if (bool) {
+
+  const failure = await page.evaluate(() => {
+    return document.querySelector("#DiscountCodeModalFailure")?.className.includes("in");
+  });
+
+  if (failure) {
     console.log("לא נמצא קוד הטבה");
     await browser.close();
-    return { benefit: `ERROR`, nameOfBenefit: "No benefit found" };
+    return { benefit: "ERROR", nameOfBenefit: "No benefit found" };
   }
 
   const nameOfBenefit = await page.evaluate(() => {
-    const benefitName = document.querySelector(".page-title").innerText
-    setTimeout(() => {}, 2000); // המתנה של 2 שניות
-    return benefitName;
+    return document.querySelector(".page-title")?.innerText || "ללא כותרת";
   });
+
   await sleep(1000);
+
   const balance = await page.evaluate(() => {
-    const balanceElement1 = document.querySelector(
-      "#hatavaContainer > div.kod-results > div.form-data > div.result-wrapper.kod-personal.already-subscribed > div.kod-hatava"
-    ).innerText;
-    const balanceElement2 = document.querySelector(
-      "#hatavaContainer > div.kod-results > div.form-data > div.result-wrapper.kod-personal.new-code > div.kod-hatava"
-    ).innerText;
-    console.log(balanceElement1+" !!!! "+ balanceElement2);
-     
-    return ( balanceElement1.length>1? balanceElement1.trim() : balanceElement2.length>1? balanceElement2.trim() : "No balance found")
+    const el1 = document.querySelector("#hatavaContainer .already-subscribed .kod-hatava");
+    const el2 = document.querySelector("#hatavaContainer .new-code .kod-hatava");
+    return el1?.innerText?.trim() || el2?.innerText?.trim() || "No balance found";
   });
-  
+
   await browser.close();
-  
-  return { benefit: `${i}:   ${balance}`, nameOfBenefit: nameOfBenefit };
-  
+
+  return { benefit: `${i}:   ${balance}`, nameOfBenefit };
 }
 
-function delay(ms) {
+function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-let transporter= nodemailer.createTransport({
-    service:"gmail",
-    auth:{
-        user:process.env.EMAIL_COMPONEY,
-        pass:process.env.EMAIL_PASS
+function arrayToString(arr, level = 0) {
+  let result = "";
+  arr.forEach((item) => {
+    if (Array.isArray(item)) {
+      result += "\n" + arrayToString(item, level + 1) + "\n";
+    } else {
+      result += "\n" + item;
     }
-})
-
-//need email address, title=title of the email, html=component with all data end css ,text=text or html
-async function sendOrderEmail({email,title,text}){
-    console.log("sending to: "+email)
-    const mailOptions={
-        from:process.env.EMAIL_COMPONEY,
-        to:email || process.env.EMAIL_COMPONEY,
-        subject:title,
-        text:text
-    }
-    return transporter.sendMail(mailOptions,(err,info)=>{
-            if(err){throw  err}
-            else {
-  console.log("email sent to -", info.accepted?.[0] || email);
+  });
+  return result;
 }
 
-        })
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_COMPONEY,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+async function sendOrderEmail({ email, title, text }) {
+  console.log("sending to:", email);
+  const mailOptions = {
+    from: process.env.EMAIL_COMPONEY,
+    to: email || process.env.EMAIL_COMPONEY,
+    subject: title,
+    text: text,
+  };
+
+  return transporter.sendMail(mailOptions, (err, info) => {
+    if (err) throw err;
+    console.log("email sent to -", info.accepted?.[0] || email);
+  });
 }
 
 module.exports = { getKodByUrl };

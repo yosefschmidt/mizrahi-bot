@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "אפליקציה לקבלת קודי הטבה ממזרחי טפחות",
   "main": "server.js",
+  "type": "module",
+  
   "scripts": {
     "start": "node server.js"
   },
