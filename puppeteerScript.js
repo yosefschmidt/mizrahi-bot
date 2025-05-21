@@ -64,7 +64,7 @@ async function processData(v, i, benefitUrl, phoneNumber,email) {
 });
 
   const page = await browser.newPage();
-  
+  executablePath: '/usr/bin/google-chrome-stable',
   const url = benefitUrl; 
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: 300000 });
  
