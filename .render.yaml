@@ -1,12 +1,13 @@
 services:
-  - type: web
+  - type: worker
     name: mizrahi-bot
     env: node
-    buildCommand: 'npm install'
-    startCommand: 'npm start'
     plan: free
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
       - key: EMAIL_COMPONEY
-        sync: false
+        value: yyooss552@email.com
       - key: EMAIL_PASS
-        sync: false
+        value: ctop hrhb abpx qnkf
+
