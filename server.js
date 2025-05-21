@@ -1,6 +1,6 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const { getKodByUrl } = require('./puppeteerScript'); // Import the function from puppeteerScript.js
+import express from 'express';
+import bodyParser from 'body-parser';
+import { getKodByUrl } from './puppeteerScript.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
