@@ -1,4 +1,4 @@
-const puppeteer = require("puppeteer-core");
+const puppeteer = require("puppeteer");
 const nodemailer = require('nodemailer')
 
 async function getKodByUrl(data) {
