@@ -2,13 +2,11 @@ services:
   - type: web
     name: mizrahi-bot
     env: node
-    plan: free
-    buildCommand: npm install
+    buildCommand: ./render-build.sh
     startCommand: npm start
+    plan: free
     envVars:
       - key: EMAIL_COMPONEY
-        value: yyooss552@email.com
+        sync: false
       - key: EMAIL_PASS
-        value: ctop hrhb abpx qnkf
-
-
+        sync: false
