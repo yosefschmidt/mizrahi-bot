@@ -1,4 +1,4 @@
-const puppeteer = require("puppeteer-core");
+const puppeteer = require("puppeteer");
 const nodemailer = require('nodemailer')
 
 async function getKodByUrl(data) {
@@ -58,7 +58,7 @@ async function getKodByUrl(data) {
 async function processData(v, i, benefitUrl, phoneNumber,email) {
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
  const browser = await puppeteer.launch({
-   executablePath: '/usr/bin/chromium-browser',
+   
   headless: true,
   args: ['--no-sandbox', '--disable-setuid-sandbox']
 });
