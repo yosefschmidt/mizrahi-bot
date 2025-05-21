@@ -1,78 +1,246 @@
 <!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <title>שליחת נתונים לשרת</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f4f8;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    h1 {
+      color: #333;
+    }
+    label {
+      font-weight: bold;
+    }
+    input, textarea, button {
+      padding: 0.5rem;
+      margin: 0.5rem 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .group {
+      background: #ffffff;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    .inline {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+    .inline input {
+      flex: 1;
+    }
+    button.add {
+      background-color: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button.remove {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .storage-toggle {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    .clear-storage {
+      background-color: #ffc107;
+      color: black;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      border-radius: 5px;
+      margin-right: 1rem;
+    }
+  </style>
 </head>
 <body>
   <h1>טופס הזנת נתונים</h1>
+  <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+    <button class="storage-toggle" onclick="toggleStorage()" id="storageBtn">שמור בזיכרון המקומי: לא</button>
+    <button class="clear-storage" id="clearBtn" onclick="clearStorage()" style="display:none">נקה נתונים שמורים</button>
+  </div>
   <form id="dataForm">
-    <label for="phone">טלפון:</label><br />
-    <input type="text" id="phone" name="phone" required /><br /><br />
+    <div class="group">
+      <label for="phone">טלפון:</label>
+      <input type="text" id="phone" name="phone" required pattern="^05\d{8}$" title="מספר טלפון בפורמט 05XXXXXXXX" />
 
-    <label for="email">אימייל:</label><br />
-    <input type="email" id="email" name="email" required /><br /><br />
+      <label for="email">אימייל:</label>
+      <input type="email" id="email" name="email" required />
+    </div>
 
-    <label for="urls">כתובות URL (מופרדות בפסיק):</label><br />
-    <input type="text" id="urls" name="urls" required /><br /><br />
+    <div class="group">
+      <label>כתובות URL:</label>
+      <div id="urlContainer"></div>
+      <button type="button" class="add" onclick="addUrl()">+ הוסף כתובת</button>
+    </div>
 
-    <label for="dataInput">נתונים (JSON):</label><br />
-    <textarea id="dataInput" name="dataInput" rows="6" cols="40" required>
-[
-  {"id":"12345","cardNumber":"67890","num":1},
-  {"id":"54321","cardNumber":"09876","num":2}
-]
-    </textarea><br /><br />
+    <div class="group">
+      <label>נתוני אנשים:</label>
+      <div id="personContainer"></div>
+      <button type="button" class="add" onclick="addPerson()">+ הוסף אדם</button>
+    </div>
 
-    <button type="submit">שלח</button>
+    <div class="actions">
+      <button type="submit">שלח</button>
+      <button type="button" onclick="downloadJson()">הורד JSON</button>
+    </div>
   </form>
 
   <pre id="response"></pre>
 
   <script>
-  const form = document.getElementById('dataForm');
-  const responseEl = document.getElementById('response');
+    const urlContainer = document.getElementById('urlContainer');
+    const personContainer = document.getElementById('personContainer');
+    const clearBtn = document.getElementById('clearBtn');
+    let saveLocally = false;
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const phone = form.phone.value.trim();
-    const email = form.email.value.trim();
-    const urls = form.urls.value.trim().split(',').map(u => u.trim());
-    let data;
-
-    try {
-      data = JSON.parse(form.dataInput.value);
-    } catch (err) {
-      responseEl.textContent = 'נתוני JSON שגויים';
-      return;
+    function toggleStorage() {
+      saveLocally = !saveLocally;
+      document.getElementById('storageBtn').textContent = `שמור בזיכרון המקומי: ${saveLocally ? 'כן' : 'לא'}`;
     }
 
-    const payload = { phone, email, url: urls, data };
-    responseEl.textContent = 'שולח...';
+    function clearStorage() {
+      localStorage.removeItem('mizrahiFormData');
+      document.getElementById('email').value = '';
+      document.getElementById('phone').value = '';
+      urlContainer.innerHTML = '';
+      personContainer.innerHTML = '';
+      addUrl();
+      addPerson();
+      clearBtn.style.display = 'none';
+    }
 
-    try {
-      const res = await fetch('/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+    function addUrl(value = '') {
+      const div = document.createElement('div');
+      div.className = 'inline';
+      div.innerHTML = `
+        <input type="url" name="url" value="${value}" placeholder="https://example.com" required pattern="https://www\.mizrahi-tefahot\.co\.il/.*" title="יש להזין כתובת תקינה מאתר מזרחי טפחות בלבד" />
+        <button type="button" class="remove" onclick="this.parentElement.remove()">X</button>
+      `;
+      urlContainer.appendChild(div);
+    }
+
+    function addPerson(id = '', cardNumber = '') {
+      const div = document.createElement('div');
+      div.className = 'inline';
+      div.innerHTML = `
+        <input type="text" name="id" placeholder="ת.ז." pattern="\d{5,10}" title="מספר תעודת זהות" value="${id}" required />
+        <input type="text" name="cardNumber" placeholder="6 ספרות" pattern="\d{6}" title="6 ספרות מכרטיס אשראי" value="${cardNumber}" required />
+        <button type="button" class="remove" onclick="this.parentElement.remove()">X</button>
+      `;
+      personContainer.appendChild(div);
+    }
+
+    function collectFormData() {
+      const phone = document.getElementById('phone').value.trim();
+      const email = document.getElementById('email').value.trim();
+
+      const urls = Array.from(document.querySelectorAll('input[name="url"]')).map(input => input.value.trim()).filter(Boolean);
+      const peopleInputs = document.querySelectorAll('#personContainer .inline');
+      const data = Array.from(peopleInputs).map((div, i) => {
+        const inputs = div.querySelectorAll('input');
+        return {
+          num: i + 1,
+          id: inputs[0].value.trim(),
+          cardNumber: inputs[1].value.trim()
+        };
       });
 
-      const text = await res.text(); // נקרא את הטקסט כמו שהוא
+      return { email, phone, url: urls, data };
+    }
+
+    function saveToLocalStorage() {
+      if (!saveLocally) return;
+      const payload = collectFormData();
+      localStorage.setItem('mizrahiFormData', JSON.stringify(payload));
+      clearBtn.style.display = 'inline-block';
+    }
+
+    function loadFromLocalStorage() {
+      const saved = localStorage.getItem('mizrahiFormData');
+      if (!saved) return;
 
       try {
-        const json = JSON.parse(text); // ננסה לפרש כ־JSON
-        responseEl.textContent = JSON.stringify(json, null, 2);
+        const { email, phone, url, data } = JSON.parse(saved);
+        document.getElementById('email').value = email || '';
+        document.getElementById('phone').value = phone || '';
+
+        urlContainer.innerHTML = '';
+        (url || []).forEach(addUrl);
+
+        personContainer.innerHTML = '';
+        (data || []).forEach(p => addPerson(p.id, p.cardNumber));
+
+        clearBtn.style.display = 'inline-block';
       } catch (e) {
-        // אם לא הצליח — נציג את הטקסט כמו שהוא
-        responseEl.textContent = 'שגיאה מהשרת:\n' + text;
+        console.warn('בעיה בטעינת הנתונים מהאחסון המקומי', e);
       }
-
-    } catch (err) {
-      responseEl.textContent = 'שגיאה: ' + err.message;
     }
-  });
-</script>
 
+    document.getElementById('dataForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const payload = collectFormData();
+      const responseEl = document.getElementById('response');
+      responseEl.textContent = 'שולח...';
+      saveToLocalStorage();
+
+      try {
+        const res = await fetch('/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const text = await res.text();
+        try {
+          const json = JSON.parse(text);
+          responseEl.textContent = JSON.stringify(json, null, 2);
+        } catch {
+          responseEl.textContent = 'שגיאה מהשרת:\n' + text;
+        }
+      } catch (err) {
+        responseEl.textContent = 'שגיאת רשת: ' + err.message;
+      }
+    });
+
+    function downloadJson() {
+      const payload = collectFormData();
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'data.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // התחלה עם שדה אחד + טעינת נתונים שמורים
+    loadFromLocalStorage();
+    if (urlContainer.children.length === 0) addUrl();
+    if (personContainer.children.length === 0) addPerson();
+  </script>
 </body>
 </html>
