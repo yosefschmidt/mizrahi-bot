@@ -10,6 +10,5 @@ services:
         value: yyooss552@email.com
       - key: EMAIL_PASS
         value: ctop hrhb abpx qnkf
-       - key: PUPPETEER_SKIP_DOWNLOAD
-        value: 'true'
+
 
