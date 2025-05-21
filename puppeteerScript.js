@@ -139,7 +139,10 @@ async function sendOrderEmail({email,title,text}){
     }
     return transporter.sendMail(mailOptions,(err,info)=>{
             if(err){throw  err}
-            else{res.send("email send to -"+info)}
+            else {
+  console.log("email sent to -", info.accepted?.[0] || email);
+}
+
         })
 }
 
