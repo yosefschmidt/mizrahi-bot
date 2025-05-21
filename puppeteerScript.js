@@ -59,6 +59,7 @@ async function processData(v, i, benefitUrl, phoneNumber,email) {
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
  const browser = await puppeteer.launch({
   headless: true,
+   executablePath: '/usr/bin/google-chrome',
   args: ['--no-sandbox', '--disable-setuid-sandbox']
 });
 
