@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: mizrahi-bot
+    env: node
+    buildCommand: 'npm install'
+    startCommand: 'npm start'
+    plan: free
+    envVars:
+      - key: EMAIL_COMPONEY
+        sync: false
+      - key: EMAIL_PASS
+        sync: false

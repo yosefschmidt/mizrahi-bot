@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8" />
+  <title>שליחת נתונים לשרת</title>
+</head>
+<body>
+  <h1>טופס הזנת נתונים</h1>
+  <form id="dataForm">
+    <label for="phone">טלפון:</label><br />
+    <input type="text" id="phone" name="phone" required /><br /><br />
+
+    <label for="email">אימייל:</label><br />
+    <input type="email" id="email" name="email" required /><br /><br />
+
+    <label for="urls">כתובות URL (מופרדות בפסיק):</label><br />
+    <input type="text" id="urls" name="urls" required /><br /><br />
+
+    <label for="dataInput">נתונים (JSON):</label><br />
+    <textarea id="dataInput" name="dataInput" rows="6" cols="40" required>
+[
+  {"id":"12345","cardNumber":"67890","num":1},
+  {"id":"54321","cardNumber":"09876","num":2}
+]
+    </textarea><br /><br />
+
+    <button type="submit">שלח</button>
+  </form>
+
+  <pre id="response"></pre>
+
+  <script>
+    const form = document.getElementById('dataForm');
+    const responseEl = document.getElementById('response');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const phone = form.phone.value.trim();
+      const email = form.email.value.trim();
+      const urls = form.urls.value.trim().split(',').map(u => u.trim());
+      let data;
+
+      try {
+        data = JSON.parse(form.dataInput.value);
+      } catch (err) {
+        responseEl.textContent = 'נתוני JSON שגויים';
+        return;
+      }
+
+      const payload = {
+        phone,
+        email,
+        url: urls,
+        data,
+      };
+
+      responseEl.textContent = 'שולח...';
+
+      try {
+        const res = await fetch('/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+          const text = await res.text();
+          responseEl.textContent = 'שגיאה בשרת: ' + text;
+          return;
+        }
+
+        const json = await res.json();
+        responseEl.textContent = JSON.stringify(json, null, 2);
+      } catch (err) {
+        responseEl.textContent = 'שגיאה: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
