@@ -58,7 +58,7 @@ async function getKodByUrl(data) {
 async function processData(v, i, benefitUrl, phoneNumber,email) {
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
  const browser = await puppeteer.launch({
-   executablePath: '/usr/bin/google-chrome',
+   executablePath: '/usr/bin/google-chrome-stable',
   headless: "new",
   args: ['--no-sandbox', '--disable-setuid-sandbox']
 });
