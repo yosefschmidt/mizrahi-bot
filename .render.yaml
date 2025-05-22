@@ -5,8 +5,12 @@ services:
     buildCommand: ./render-build.sh
     startCommand: npm start
     plan: starter
+    
     envVars:
       - key: EMAIL_COMPONEY
         sync: false
       - key: EMAIL_PASS
         sync: false
+        - key: PUPPETEER_SKIP_DOWNLOAD
+      value: true
+
