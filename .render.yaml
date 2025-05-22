@@ -2,7 +2,7 @@ services:
   - type: web
     name: mizrahi-bot
     env: node
-    buildCommand: ./render-build.sh
+    buildCommand: npm install
     startCommand: npm start
     plan: starter
     
