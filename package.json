@@ -1,15 +1,16 @@
 {
   "name": "mizrahi-bot",
   "version": "1.0.0",
-  "description": "קודי מזרחי",
+  "description": "אפליקציה לקבלת קודי הטבה ממזרחי טפחות",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
     "body-parser": "^1.20.2",
+    "express": "^4.18.2",
     "nodemailer": "^6.9.4",
     "puppeteer": "^21.3.8"
   }
 }
+
