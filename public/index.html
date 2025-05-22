@@ -193,8 +193,8 @@
       const div = document.createElement('div');
       div.className = 'inline';
       div.innerHTML = `
-        <input type="text" name="id" placeholder="ת.ז." pattern="\d{5,10}" title="מספר תעודת זהות" value="${id}" required />
-        <input type="text" name="cardNumber" placeholder="6 ספרות" pattern="\d{6}" title="6 ספרות מכרטיס אשראי" value="${cardNumber}" required />
+        <input type="text" name="id" placeholder="ת.ז."  title="מספר תעודת זהות" value="${id}" required />
+        <input type="text" name="cardNumber" placeholder="6 ספרות"  title="6 ספרות מכרטיס אשראי" value="${cardNumber}" required />
         <button type="button" class="remove" onclick="this.parentElement.remove()">X</button>
       `;
       personContainer.appendChild(div);
