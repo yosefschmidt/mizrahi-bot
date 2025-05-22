@@ -1,2 +1,23 @@
-node_modules
+# .gitignore - מומלץ לפרויקט Node.js
+
+# תיקיות npm
+node_modules/
+package-lock.json
+
+# קובץ סיסמאות
 .env
+
+# לוגים
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Puppeteer cache (אם נוצר)
+.cache/
+
+# קבצי מערכת
+.DS_Store
+Thumbs.db
+
+# הגדרות עורך
+.vscode/
